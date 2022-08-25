@@ -10,7 +10,7 @@ class AvailableUpdatesCard extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-  final ManagerAPI _managerAPI = ManagerAPI();
+  final ManagerAPI _managerAPI = locator<ManagerAPI>();
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +25,7 @@ class AvailableUpdatesCard extends StatelessWidget {
                   ? ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) => FutureBuilder<String>(
                         future: _managerAPI.getAppChangelog(
