@@ -26,14 +26,14 @@ class HomeViewModel extends BaseViewModel {
   List<PatchedApplication> patchedUpdatableApps = [];
 
   Future<void> initialize() async {
-    await _getPatchedApps();
     await flutterLocalNotificationsPlugin.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('ic_notification'),
       ),
       onSelectNotification: (p) => DeviceApps.openApp('app.revanced.manager'),
     );
-    _managerAPI.reAssessSavedApps().then((_) => notifyListeners());
+    _getPatchedApps();
+    _managerAPI.reAssessSavedApps().then((_) => _getPatchedApps());
   }
 
   void toggleUpdatableApps(bool value) {
@@ -49,7 +49,7 @@ class HomeViewModel extends BaseViewModel {
     locator<MainViewModel>().setIndex(1);
   }
 
-  Future<void> _getPatchedApps() async {
+  void _getPatchedApps() {
     patchedInstalledApps = _managerAPI
         .getPatchedApps()
         .where((app) => app.hasUpdates == false)

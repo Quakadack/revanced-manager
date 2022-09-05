@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_i18n/widgets/I18nText.dart';
+import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:revanced_manager/ui/views/root_checker/root_checker_viewmodel.dart';
 import 'package:revanced_manager/ui/widgets/rootCheckerView/magisk_button.dart';
@@ -13,31 +13,16 @@ class RootCheckerView extends StatelessWidget {
     return ViewModelBuilder<RootCheckerViewModel>.reactive(
       viewModelBuilder: () => RootCheckerViewModel(),
       builder: (context, model, child) => Scaffold(
-        floatingActionButton: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const Text('nonroot'),
-            const SizedBox(height: 8),
-            FloatingActionButton(
-              onPressed: model.navigateToHome,
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(48),
-              ),
-              child: const Icon(
-                Icons.keyboard_arrow_right,
-                size: 32,
-              ),
-            ),
-          ],
+        floatingActionButton: FloatingActionButton.extended(
+          label: I18nText('rootCheckerView.nonRootButton'),
+          icon: const Icon(Icons.keyboard_arrow_right),
+          onPressed: () => model.navigateAsNonRoot(),
         ),
         body: Container(
           height: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 28.0),
           child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
+            children: <Widget>[
               const SizedBox(height: 120),
               I18nText(
                 'rootCheckerView.widgetTitle',
@@ -51,27 +36,29 @@ class RootCheckerView extends StatelessWidget {
               const SizedBox(height: 24),
               I18nText(
                 'rootCheckerView.widgetDescription',
-                child: Text(
+                child: const Text(
                   '',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.roboto(
+                  style: TextStyle(
                     fontSize: 17,
                     letterSpacing: 1.1,
                   ),
                 ),
               ),
-              const SizedBox(height: 170),
-              MagiskButton(
-                onPressed: () => model.checkRoot(),
-              ),
-              I18nText(
-                'rootCheckerView.grantedPermission',
-                translationParams: {
-                  'isRooted': model.isRooted.toString(),
-                },
-                child: Text(
-                  '',
-                  style: GoogleFonts.poppins(),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    MagiskButton(
+                      onPressed: () => model.navigateAsRoot(),
+                    ),
+                    I18nText(
+                      'rootCheckerView.grantedPermission',
+                      translationParams: {
+                        'isRooted': model.isRooted.toString(),
+                      },
+                    ),
+                  ],
                 ),
               ),
             ],

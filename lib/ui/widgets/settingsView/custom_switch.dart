@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class CustomSwitch extends StatelessWidget {
   final ValueChanged<bool> onChanged;
   final bool value;
+
   const CustomSwitch({
     Key? key,
     required this.onChanged,
@@ -11,30 +12,30 @@ class CustomSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color? activeColor = Theme.of(context).colorScheme.tertiary;
-    Color? inactiveColor = Theme.of(context).colorScheme.secondary;
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: SizedBox(
         height: 25,
         width: 50,
         child: Stack(
-          children: [
+          children: <Widget>[
             AnimatedContainer(
               height: 25,
               width: 50,
               curve: Curves.ease,
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 400),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.all(
                   Radius.circular(25.0),
                 ),
-                color: !value ? activeColor : inactiveColor,
+                color: value
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.secondary,
               ),
             ),
             AnimatedAlign(
               curve: Curves.ease,
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 400),
               alignment: !value ? Alignment.centerLeft : Alignment.centerRight,
               child: Container(
                 height: 20,
