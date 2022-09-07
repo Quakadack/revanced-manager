@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:revanced_manager/models/patch.dart';
 
 class OptionsTextField extends StatelessWidget {
   final String hint;
@@ -53,13 +52,18 @@ class OptionsFilePicker extends StatelessWidget {
           ElevatedButton(
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all(
-                Theme.of(context).colorScheme.secondary,
+                Theme.of(context).colorScheme.primary,
               ),
             ),
             onPressed: () {
               // pick files
             },
-            child: const Text('Select File'),
+            child: Text(
+              'Select File',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyText1?.color,
+              ),
+            ),
           ),
         ],
       ),

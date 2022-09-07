@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:revanced_manager/app/app.locator.dart';
 import 'package:revanced_manager/services/github_api.dart';
-import 'package:revanced_manager/constants.dart';
+import 'package:revanced_manager/services/manager_api.dart';
 import 'package:revanced_manager/ui/views/home/home_viewmodel.dart';
 import 'package:revanced_manager/ui/widgets/installerView/custom_material_button.dart';
 import 'package:revanced_manager/ui/widgets/shared/custom_card.dart';
@@ -20,6 +20,7 @@ class LatestCommitCard extends StatefulWidget {
 }
 
 class _LatestCommitCardState extends State<LatestCommitCard> {
+  final ManagerAPI _managerAPI = locator<ManagerAPI>();
   final GithubAPI _githubAPI = GithubAPI();
 
   @override
@@ -35,13 +36,18 @@ class _LatestCommitCardState extends State<LatestCommitCard> {
                 children: <Widget>[
                   I18nText(
                     'latestCommitCard.patcherLabel',
-                    child: const Text(
+                    child: Text(
                       '',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                     ),
                   ),
                   FutureBuilder<String>(
-                    future: _githubAPI.latestCommitTime(ghOrg, patcherRepo),
+                    future: _githubAPI.latestCommitTime(
+                      _managerAPI.getPatcherRepo(),
+                    ),
                     builder: (context, snapshot) => Text(
                       snapshot.hasData && snapshot.data!.isNotEmpty
                           ? FlutterI18n.translate(
@@ -53,6 +59,9 @@ class _LatestCommitCardState extends State<LatestCommitCard> {
                               context,
                               'latestCommitCard.loadingLabel',
                             ),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                     ),
                   ),
                 ],
@@ -62,20 +71,39 @@ class _LatestCommitCardState extends State<LatestCommitCard> {
                 children: <Widget>[
                   I18nText(
                     'latestCommitCard.managerLabel',
-                    child: const Text(
+                    child: Text(
                       '',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                     ),
                   ),
                   FutureBuilder<String>(
-                    future: _githubAPI.latestCommitTime(ghOrg, managerRepo),
-                    builder: (context, snapshot) =>
-                        snapshot.hasData && snapshot.data!.isNotEmpty
-                            ? I18nText(
-                                'latestCommitCard.timeagoLabel',
-                                translationParams: {'time': snapshot.data!},
-                              )
-                            : I18nText('latestCommitCard.loadingLabel'),
+                    future: _githubAPI.latestCommitTime(
+                      _managerAPI.getManagerRepo(),
+                    ),
+                    builder: (context, snapshot) => snapshot.hasData &&
+                            snapshot.data!.isNotEmpty
+                        ? I18nText(
+                            'latestCommitCard.timeagoLabel',
+                            translationParams: {'time': snapshot.data!},
+                            child: Text(
+                              '',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          )
+                        : I18nText(
+                            'latestCommitCard.loadingLabel',
+                            child: Text(
+                              '',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -85,7 +113,7 @@ class _LatestCommitCardState extends State<LatestCommitCard> {
             future: locator<HomeViewModel>().hasManagerUpdates(),
             initialData: false,
             builder: (context, snapshot) => Opacity(
-              opacity: snapshot.hasData && snapshot.data! ? 1.0 : 1.0,
+              opacity: snapshot.hasData && snapshot.data! ? 1.0 : 0.5,
               child: CustomMaterialButton(
                 isExpanded: false,
                 label: I18nText('latestCommitCard.updateButton'),
