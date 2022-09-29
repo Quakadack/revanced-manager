@@ -5,10 +5,23 @@ class RootAPI {
   final String _postFsDataDirPath = '/data/adb/post-fs-data.d';
   final String _serviceDDirPath = '/data/adb/service.d';
 
+  Future<bool> isRooted() async {
+    try {
+      bool? isRooted = await Root.isRootAvailable();
+      return isRooted != null && isRooted;
+    } on Exception {
+      return false;
+    }
+  }
+
   Future<bool> hasRootPermissions() async {
     try {
-      bool? isRooted = await Root.isRooted();
-      return isRooted != null && isRooted;
+      bool? isRooted = await Root.isRootAvailable();
+      if (isRooted != null && isRooted) {
+        isRooted = await Root.isRooted();
+        return isRooted != null && isRooted;
+      }
+      return false;
     } on Exception {
       return false;
     }
@@ -59,15 +72,8 @@ class RootAPI {
       );
       if (res != null) {
         List<String> apps = res.split('\n');
-        List<String> toRemove = [];
-        for (String packageName in apps) {
-          bool isInstalled = await isAppInstalled(packageName);
-          if (!isInstalled) {
-            toRemove.add(packageName);
-          }
-        }
-        apps.removeWhere((a) => toRemove.contains(a));
-        return apps;
+        apps.removeWhere((pack) => pack.isEmpty);
+        return apps.map((pack) => pack.trim()).toList();
       }
     } on Exception {
       return List.empty();

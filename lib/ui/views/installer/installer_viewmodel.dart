@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,13 +10,18 @@ import 'package:revanced_manager/models/patch.dart';
 import 'package:revanced_manager/models/patched_application.dart';
 import 'package:revanced_manager/services/manager_api.dart';
 import 'package:revanced_manager/services/patcher_api.dart';
+import 'package:revanced_manager/services/root_api.dart';
+import 'package:revanced_manager/services/toast.dart';
 import 'package:revanced_manager/ui/views/patcher/patcher_viewmodel.dart';
+import 'package:revanced_manager/ui/widgets/shared/custom_material_button.dart';
 import 'package:stacked/stacked.dart';
 import 'package:wakelock/wakelock.dart';
 
 class InstallerViewModel extends BaseViewModel {
   final ManagerAPI _managerAPI = locator<ManagerAPI>();
   final PatcherAPI _patcherAPI = locator<PatcherAPI>();
+  final RootAPI _rootAPI = RootAPI();
+  final Toast _toast = locator<Toast>();
   final PatchedApplication _app = locator<PatcherViewModel>().selectedApp!;
   final List<Patch> _patches = locator<PatcherViewModel>().selectedPatches;
   static const _installerChannel = MethodChannel(
@@ -25,14 +31,16 @@ class InstallerViewModel extends BaseViewModel {
   double? progress = 0.0;
   String logs = '';
   String headerLogs = '';
+  bool isRooted = false;
   bool isPatching = true;
   bool isInstalled = false;
   bool hasErrors = false;
 
   Future<void> initialize(BuildContext context) async {
+    isRooted = await _rootAPI.isRooted();
     if (await Permission.ignoreBatteryOptimizations.isGranted) {
       try {
-        await FlutterBackground.initialize(
+        FlutterBackground.initialize(
           androidConfig: FlutterBackgroundAndroidConfig(
             notificationTitle: FlutterI18n.translate(
               context,
@@ -48,8 +56,7 @@ class InstallerViewModel extends BaseViewModel {
               defType: 'drawable',
             ),
           ),
-        );
-        await FlutterBackground.enableBackgroundExecution();
+        ).then((value) => FlutterBackground.enableBackgroundExecution());
       } on Exception {
         // ignore
       }
@@ -76,14 +83,20 @@ class InstallerViewModel extends BaseViewModel {
   }
 
   void update(double value, String header, String log) {
-    if (value > 0) {
+    if (value >= 0.0) {
       progress = value;
     }
-    isPatching = progress == 1.0 ? false : true;
-    if (progress == 0.0) {
+    if (value == 0.0) {
       logs = '';
+      isPatching = true;
       isInstalled = false;
       hasErrors = false;
+    } else if (value == 1.0) {
+      isPatching = false;
+      hasErrors = false;
+    } else if (value == -100.0) {
+      isPatching = false;
+      hasErrors = true;
     }
     if (header.isNotEmpty) {
       headerLogs = header;
@@ -93,6 +106,9 @@ class InstallerViewModel extends BaseViewModel {
         logs += '\n';
       }
       logs += log;
+      if (logs[logs.length - 1] == '\n') {
+        logs = logs.substring(0, logs.length - 1);
+      }
       Future.delayed(const Duration(milliseconds: 500)).then((value) {
         scrollController.animateTo(
           scrollController.position.maxScrollExtent,
@@ -115,46 +131,76 @@ class InstallerViewModel extends BaseViewModel {
           _patches,
         );
       } catch (e) {
-        hasErrors = true;
-        update(-1.0, 'Aborting...', 'An error occurred! Aborting\nError: $e');
+        update(
+          -100.0,
+          'Aborting...',
+          'An error occurred! Aborting\nError:\n$e',
+        );
       }
     } else {
-      hasErrors = true;
-      update(-1.0, 'Aborting...', 'No app or patches selected! Aborting');
+      update(-100.0, 'Aborting...', 'No app or patches selected! Aborting');
     }
-    if (await Permission.ignoreBatteryOptimizations.isGranted) {
+    if (FlutterBackground.isBackgroundExecutionEnabled) {
       try {
-        await FlutterBackground.disableBackgroundExecution();
+        FlutterBackground.disableBackgroundExecution();
       } on Exception {
         // ignore
       }
     }
     await Wakelock.disable();
-    isPatching = false;
   }
 
-  void installResult(bool installAsRoot) async {
+  void installResult(BuildContext context, bool installAsRoot) async {
     _app.isRooted = installAsRoot;
-    update(
-      1.0,
-      'Installing...',
-      _app.isRooted
-          ? 'Installing patched file using root method'
-          : 'Installing patched file using nonroot method',
-    );
-    isInstalled = await _patcherAPI.installPatchedFile(_app);
-    if (isInstalled) {
-      update(1.0, 'Installed!', 'Installed!');
-      _app.patchDate = DateTime.now();
-      _app.appliedPatches = _patches.map((p) => p.name).toList();
-      bool hasMicroG = _patches.any((p) => p.name.endsWith('microg-support'));
-      if (hasMicroG) {
-        _app.packageName = _app.packageName.replaceFirst(
-          'com.google.',
-          'app.revanced.',
-        );
+    bool hasMicroG = _patches.any((p) => p.name.endsWith('microg-support'));
+    bool rootMicroG = installAsRoot && hasMicroG;
+    bool rootFromStorage = installAsRoot && _app.isFromStorage;
+    bool ytWithoutRootMicroG =
+        !installAsRoot && !hasMicroG && _app.packageName.contains('youtube');
+    if (rootMicroG || rootFromStorage || ytWithoutRootMicroG) {
+      return showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: I18nText('installerView.installErrorDialogTitle'),
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          content: I18nText(
+            rootMicroG
+                ? 'installerView.installErrorDialogText1'
+                : rootFromStorage
+                    ? 'installerView.installErrorDialogText3'
+                    : 'installerView.installErrorDialogText2',
+          ),
+          actions: <Widget>[
+            CustomMaterialButton(
+              label: I18nText('okButton'),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        ),
+      );
+    } else {
+      update(
+        1.0,
+        'Installing...',
+        _app.isRooted
+            ? 'Installing patched file using root method'
+            : 'Installing patched file using nonroot method',
+      );
+      isInstalled = await _patcherAPI.installPatchedFile(_app);
+      if (isInstalled) {
+        update(1.0, 'Installed!', 'Installed!');
+        _app.isFromStorage = false;
+        _app.patchDate = DateTime.now();
+        _app.appliedPatches = _patches.map((p) => p.name).toList();
+        if (hasMicroG) {
+          _app.name += ' ReVanced';
+          _app.packageName = _app.packageName.replaceFirst(
+            'com.google.',
+            'app.revanced.',
+          );
+        }
+        await _managerAPI.savePatchedApp(_app);
       }
-      await _managerAPI.savePatchedApp(_app);
     }
   }
 
@@ -186,5 +232,15 @@ class InstallerViewModel extends BaseViewModel {
         shareLog();
         break;
     }
+  }
+
+  Future<bool> onWillPop(BuildContext context) async {
+    if (isPatching) {
+      _toast.show('installerView.noExit');
+      return false;
+    }
+    cleanPatcher();
+    Navigator.of(context).pop();
+    return true;
   }
 }

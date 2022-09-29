@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
@@ -10,7 +11,7 @@ import 'package:revanced_manager/services/root_api.dart';
 import 'package:revanced_manager/ui/views/home/home_viewmodel.dart';
 import 'package:revanced_manager/ui/views/navigation/navigation_viewmodel.dart';
 import 'package:revanced_manager/ui/views/patcher/patcher_viewmodel.dart';
-import 'package:revanced_manager/ui/widgets/installerView/custom_material_button.dart';
+import 'package:revanced_manager/ui/widgets/shared/custom_material_button.dart';
 import 'package:revanced_manager/utils/string.dart';
 import 'package:stacked/stacked.dart';
 
@@ -19,19 +20,26 @@ class AppInfoViewModel extends BaseViewModel {
   final PatcherAPI _patcherAPI = locator<PatcherAPI>();
   final RootAPI _rootAPI = RootAPI();
 
-  Future<void> uninstallApp(PatchedApplication app, bool onlyUnpatch) async {
+  Future<void> uninstallApp(
+    BuildContext context,
+    PatchedApplication app,
+    bool onlyUnpatch,
+  ) async {
+    bool isUninstalled = true;
     if (app.isRooted) {
       bool hasRootPermissions = await _rootAPI.hasRootPermissions();
       if (hasRootPermissions) {
-        _rootAPI.deleteApp(app.packageName, app.apkFilePath);
-        _managerAPI.deletePatchedApp(app);
+        await _rootAPI.deleteApp(app.packageName, app.apkFilePath);
         if (!onlyUnpatch) {
-          DeviceApps.uninstallApp(app.packageName);
+          await DeviceApps.uninstallApp(app.packageName);
         }
       }
     } else {
-      DeviceApps.uninstallApp(app.packageName);
-      _managerAPI.deletePatchedApp(app);
+      isUninstalled = await DeviceApps.uninstallApp(app.packageName);
+    }
+    if (isUninstalled) {
+      await _managerAPI.deletePatchedApp(app);
+      locator<HomeViewModel>().initialize(context);
     }
   }
 
@@ -43,7 +51,7 @@ class AppInfoViewModel extends BaseViewModel {
     locator<NavigationViewModel>().setIndex(1);
   }
 
-  Future<void> showUninstallAlertDialog(
+  Future<void> showUninstallDialog(
     BuildContext context,
     PatchedApplication app,
     bool onlyUnpatch,
@@ -65,38 +73,38 @@ class AppInfoViewModel extends BaseViewModel {
         ),
       );
     } else {
-      return showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: I18nText(
-            onlyUnpatch
-                ? 'appInfoView.unpatchDialogTitle'
-                : 'appInfoView.uninstallDialogTitle',
-          ),
-          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-          content: I18nText(
-            onlyUnpatch
-                ? 'appInfoView.unpatchDialogText'
-                : 'appInfoView.uninstallDialogText',
-          ),
-          actions: <Widget>[
-            CustomMaterialButton(
-              isFilled: false,
-              label: I18nText('cancelButton'),
-              onPressed: () => Navigator.of(context).pop(),
+      if (onlyUnpatch) {
+        return showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: I18nText(
+              'appInfoView.unpatchButton',
             ),
-            CustomMaterialButton(
-              label: I18nText('okButton'),
-              onPressed: () {
-                uninstallApp(app, onlyUnpatch);
-                locator<HomeViewModel>().initialize(context);
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        ),
-      );
+            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+            content: I18nText(
+              'appInfoView.unpatchDialogText',
+            ),
+            actions: <Widget>[
+              CustomMaterialButton(
+                isFilled: false,
+                label: I18nText('noButton'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              CustomMaterialButton(
+                label: I18nText('yesButton'),
+                onPressed: () {
+                  uninstallApp(context, app, onlyUnpatch);
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          ),
+        );
+      } else {
+        uninstallApp(context, app, onlyUnpatch);
+        Navigator.of(context).pop();
+      }
     }
   }
 

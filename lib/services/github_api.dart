@@ -6,15 +6,22 @@ import 'package:dio_http_cache_lts/dio_http_cache_lts.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:injectable/injectable.dart';
 import 'package:revanced_manager/models/patch.dart';
+import 'package:dio_http2_adapter/dio_http2_adapter.dart';
 
 @lazySingleton
 class GithubAPI {
-  final String apiUrl = 'https://api.github.com';
-  final Dio _dio = Dio();
+  final Dio _dio = Dio(
+    BaseOptions(baseUrl: 'https://api.github.com'),
+  )..httpClientAdapter = Http2Adapter(
+      ConnectionManager(
+        idleTimeout: 10000,
+        onClientCreate: (_, config) => config.onBadCertificate = (_) => true,
+      ),
+    );
   final DioCacheManager _dioCacheManager = DioCacheManager(CacheConfig());
   final Options _cacheOptions = buildCacheOptions(
-    const Duration(days: 1),
-    maxStale: const Duration(days: 7),
+    const Duration(hours: 6),
+    maxStale: const Duration(days: 1),
   );
   final Map<String, String> repoAppPath = {
     'com.google.android.youtube': 'youtube',
@@ -37,7 +44,7 @@ class GithubAPI {
   Future<Map<String, dynamic>?> _getLatestRelease(String repoName) async {
     try {
       var response = await _dio.get(
-        '$apiUrl/repos/$repoName/releases/latest',
+        '/repos/$repoName/releases/latest',
         options: _cacheOptions,
       );
       return response.data;
@@ -55,7 +62,7 @@ class GithubAPI {
         'src/main/kotlin/app/revanced/patches/${repoAppPath[packageName]}';
     try {
       var response = await _dio.get(
-        '$apiUrl/repos/$repoName/commits',
+        '/repos/$repoName/commits',
         queryParameters: {
           'path': path,
           'per_page': 3,

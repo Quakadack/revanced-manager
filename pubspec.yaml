@@ -4,7 +4,7 @@ homepage: https://github.com/revanced/revanced-manager
 
 publish_to: 'none'
 
-version: 0.0.7+7
+version: 0.0.26+26
 
 environment:
   sdk: ">=2.17.5 <3.0.0"
@@ -20,6 +20,7 @@ dependencies:
       ref: revanced-manager
   device_info_plus: ^4.1.2
   dio: ^4.0.6
+  dio_http2_adapter: ^2.0.0
   dio_http_cache_lts: ^0.4.1
   dynamic_color: ^1.5.4
   dynamic_themes: ^1.1.0
@@ -54,7 +55,10 @@ dependencies:
   path_provider: ^2.0.11
   permission_handler: ^10.0.0
   pull_to_refresh: ^2.0.0
-  root: ^2.0.2
+  root:
+    git:
+      url: https://github.com/gokul1630/root
+      ref: main
   share_extend: ^2.0.0
   shared_preferences: ^2.0.15
   skeletons: ^0.0.3
@@ -63,6 +67,7 @@ dependencies:
   stacked_services: ^0.9.3
   stacked_themes: ^0.3.9
   timeago: ^3.2.2
+  timezone: ^0.8.0
   url_launcher: ^6.1.5
   wakelock: ^0.6.2
 
@@ -74,13 +79,6 @@ dev_dependencies:
     sdk: flutter
   injectable_generator: ^1.5.4
   json_serializable: ^6.3.1
-
-flutter_icons:
-  android: true
-  ios: false
-  image_path: "assets/images/ic_launcher_round.png"
-  adaptive_icon_background: "#1B1B1B"
-  adaptive_icon_foreground: "assets/images/ic_launcher.png"
 
 flutter:
   uses-material-design: true

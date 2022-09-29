@@ -15,32 +15,30 @@ class PatchSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return CustomCard(
       onTap: onPressed,
-      child: CustomCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            I18nText(
-              locator<PatcherViewModel>().selectedPatches.isEmpty
-                  ? 'patchSelectorCard.widgetTitle'
-                  : 'patchSelectorCard.widgetTitleSelected',
-              child: const Text(
-                '',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          I18nText(
+            locator<PatcherViewModel>().selectedPatches.isEmpty
+                ? 'patchSelectorCard.widgetTitle'
+                : 'patchSelectorCard.widgetTitleSelected',
+            child: const Text(
+              '',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 10),
-            locator<PatcherViewModel>().selectedApp == null
-                ? I18nText('patchSelectorCard.widgetSubtitle')
-                : locator<PatcherViewModel>().selectedPatches.isEmpty
-                    ? I18nText('patchSelectorCard.widgetEmptySubtitle')
-                    : Text(_getPatchesSelection()),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          locator<PatcherViewModel>().selectedApp == null
+              ? I18nText('patchSelectorCard.widgetSubtitle')
+              : locator<PatcherViewModel>().selectedPatches.isEmpty
+                  ? I18nText('patchSelectorCard.widgetEmptySubtitle')
+                  : Text(_getPatchesSelection()),
+        ],
       ),
     );
   }
@@ -48,7 +46,7 @@ class PatchSelectorCard extends StatelessWidget {
   String _getPatchesSelection() {
     String text = '';
     for (Patch p in locator<PatcherViewModel>().selectedPatches) {
-      text += '${p.getSimpleName()} (v${p.version})\n';
+      text += '\u2022  ${p.getSimpleName()} (v${p.version})\n';
     }
     return text.substring(0, text.length - 1);
   }

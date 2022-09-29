@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
-import 'package:revanced_manager/ui/widgets/installerView/custom_material_button.dart';
+import 'package:revanced_manager/ui/widgets/shared/custom_material_button.dart';
 import 'package:revanced_manager/ui/widgets/shared/custom_card.dart';
 
 // ignore: must_be_immutable
@@ -39,102 +39,109 @@ class _PatchItemState extends State<PatchItem> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+      child: CustomCard(
         onTap: () {
           setState(() => widget.isSelected = !widget.isSelected);
           widget.onChanged(widget.isSelected);
         },
-        child: CustomCard(
-          child: Column(
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: <Widget>[
-                            Text(
-                              widget.simpleName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: <Widget>[
+                          Text(
+                            widget.simpleName,
+                            maxLines: 2,
+                            overflow: TextOverflow.visible,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(width: 4),
-                            Text(widget.version)
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.description,
-                          softWrap: true,
-                          maxLines: 3,
-                          overflow: TextOverflow.visible,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Transform.scale(
-                    scale: 1.2,
-                    child: Checkbox(
-                      value: widget.isSelected,
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      checkColor:
-                          Theme.of(context).colorScheme.secondaryContainer,
-                      side: BorderSide(
-                        width: 2.0,
-                        color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.version,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                          ),
+                        ],
                       ),
-                      onChanged: (newValue) {
-                        setState(() => widget.isSelected = newValue!);
-                        widget.onChanged(widget.isSelected);
-                      },
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.description,
+                        softWrap: true,
+                        maxLines: 3,
+                        overflow: TextOverflow.visible,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Transform.scale(
+                  scale: 1.2,
+                  child: Checkbox(
+                    value: widget.isSelected,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    checkColor:
+                        Theme.of(context).colorScheme.secondaryContainer,
+                    side: BorderSide(
+                      width: 2.0,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                  )
-                ],
-              ),
-              widget.isUnsupported
-                  ? Row(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: TextButton.icon(
-                            label:
-                                I18nText('patchItem.unsupportedWarningButton'),
-                            icon: const Icon(Icons.warning),
-                            onPressed: () => _showUnsupportedWarningDialog(),
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    width: 1,
-                                    color:
-                                        Theme.of(context).colorScheme.secondary,
-                                  ),
+                    onChanged: (newValue) {
+                      setState(() => widget.isSelected = newValue!);
+                      widget.onChanged(widget.isSelected);
+                    },
+                  ),
+                )
+              ],
+            ),
+            widget.isUnsupported
+                ? Row(
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextButton.icon(
+                          label: I18nText('patchItem.unsupportedWarningButton'),
+                          icon: const Icon(Icons.warning, size: 20.0),
+                          onPressed: () => _showUnsupportedWarningDialog(),
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(
+                                  width: 1,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
                                 ),
                               ),
-                              backgroundColor: MaterialStateProperty.all(
-                                Colors.transparent,
-                              ),
-                              foregroundColor: MaterialStateProperty.all(
-                                Theme.of(context).colorScheme.secondary,
-                              ),
+                            ),
+                            backgroundColor: MaterialStateProperty.all(
+                              Colors.transparent,
+                            ),
+                            foregroundColor: MaterialStateProperty.all(
+                              Theme.of(context).colorScheme.secondary,
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  : Container(),
-              widget.child ?? const SizedBox(),
-            ],
-          ),
+                      ),
+                    ],
+                  )
+                : Container(),
+            widget.child ?? const SizedBox(),
+          ],
         ),
       ),
     );
@@ -151,7 +158,7 @@ class _PatchItemState extends State<PatchItem> {
           translationParams: {
             'packageVersion': widget.packageVersion,
             'supportedVersions':
-                '\u2022 ${widget.supportedPackageVersions.join('\n\u2022 ')}',
+                '\u2022 ${widget.supportedPackageVersions.reversed.join('\n\u2022 ')}',
           },
         ),
         actions: <Widget>[

@@ -15,53 +15,60 @@ class AppSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return CustomCard(
       onTap: onPressed,
-      child: CustomCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            I18nText(
-              locator<PatcherViewModel>().selectedApp == null
-                  ? 'appSelectorCard.widgetTitle'
-                  : 'appSelectorCard.widgetTitleSelected',
-              child: const Text(
-                '',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          I18nText(
+            locator<PatcherViewModel>().selectedApp == null
+                ? 'appSelectorCard.widgetTitle'
+                : 'appSelectorCard.widgetTitleSelected',
+            child: const Text(
+              '',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 10),
-            locator<PatcherViewModel>().selectedApp == null
-                ? I18nText('appSelectorCard.widgetSubtitle')
-                : Row(
-                    children: <Widget>[
-                      SizedBox(
-                        height: 16.0,
-                        child: ClipOval(
-                          child: Image.memory(
-                            locator<PatcherViewModel>().selectedApp == null
-                                ? Uint8List(0)
-                                : locator<PatcherViewModel>().selectedApp!.icon,
-                            fit: BoxFit.cover,
-                          ),
+          ),
+          const SizedBox(height: 8),
+          locator<PatcherViewModel>().selectedApp == null
+              ? I18nText('appSelectorCard.widgetSubtitle')
+              : Row(
+                  children: <Widget>[
+                    SizedBox(
+                      height: 18.0,
+                      child: ClipOval(
+                        child: Image.memory(
+                          locator<PatcherViewModel>().selectedApp == null
+                              ? Uint8List(0)
+                              : locator<PatcherViewModel>().selectedApp!.icon,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(_getAppSelection()),
-                    ],
-                  ),
-          ],
-        ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                        locator<PatcherViewModel>()
+                        .getAppSelectionString(),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                  ],
+                ),
+          locator<PatcherViewModel>().selectedApp == null
+              ? Container()
+              : Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(
+                      locator<PatcherViewModel>()
+                          .getRecommendedVersionString(context),
+                    ),
+                  ],
+                ),
+        ],
       ),
     );
-  }
-
-  String _getAppSelection() {
-    String name = locator<PatcherViewModel>().selectedApp!.name;
-    String version = locator<PatcherViewModel>().selectedApp!.version;
-    return '$name (v$version)';
   }
 }

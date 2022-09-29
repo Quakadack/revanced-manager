@@ -53,9 +53,10 @@ class PatcherAPI {
       for (Package package in patch.compatiblePackages) {
         try {
           if (!filteredApps.any((app) => app.packageName == package.name)) {
-            ApplicationWithIcon? app =
-                await DeviceApps.getApp(package.name, true)
-                    as ApplicationWithIcon?;
+            ApplicationWithIcon? app = await DeviceApps.getApp(
+              package.name,
+              true,
+            ) as ApplicationWithIcon?;
             if (app != null) {
               filteredApps.add(app);
             }
@@ -69,10 +70,14 @@ class PatcherAPI {
   }
 
   Future<List<Patch>> getFilteredPatches(String packageName) async {
+    String newPackageName = packageName.replaceFirst(
+      'app.revanced.',
+      'com.google.',
+    );
     return _patches
         .where((patch) =>
             !patch.name.contains('settings') &&
-            patch.compatiblePackages.any((pack) => pack.name == packageName))
+            patch.compatiblePackages.any((pack) => pack.name == newPackageName))
         .toList();
   }
 
@@ -82,21 +87,38 @@ class PatcherAPI {
         .toList();
   }
 
+  bool dependencyNeedsIntegrations(String name) {
+    return name.contains('integrations') ||
+        _patches.any(
+          (patch) =>
+              patch.name == name &&
+              (patch.dependencies.any(
+                (dep) => dependencyNeedsIntegrations(dep),
+              )),
+        );
+  }
+
   Future<bool> needsIntegrations(List<Patch> selectedPatches) async {
     return selectedPatches.any(
-      (patch) => patch.dependencies.contains('integrations'),
+      (patch) => patch.dependencies.any(
+        (dep) => dependencyNeedsIntegrations(dep),
+      ),
     );
   }
 
   Future<bool> needsResourcePatching(List<Patch> selectedPatches) async {
     return selectedPatches.any(
-      (patch) => patch.dependencies.any((dep) => dep.contains('resource-')),
+      (patch) => patch.dependencies.any(
+        (dep) => dep.contains('resource-'),
+      ),
     );
   }
 
   Future<bool> needsSettingsPatch(List<Patch> selectedPatches) async {
     return selectedPatches.any(
-      (patch) => patch.dependencies.contains('settings'),
+      (patch) => patch.dependencies.any(
+        (dep) => dep.contains('settings'),
+      ),
     );
   }
 
@@ -199,10 +221,9 @@ class PatcherAPI {
       String prefix = appName.toLowerCase().replaceAll(' ', '-');
       String newName = '$prefix-revanced_v$version.apk';
       int lastSeparator = _outFile!.path.lastIndexOf('/');
-      File share = _outFile!.renameSync(
-        _outFile!.path.substring(0, lastSeparator + 1) + newName,
-      );
-      ShareExtend.share(share.path, 'file');
+      String newPath = _outFile!.path.substring(0, lastSeparator + 1) + newName;
+      File shareFile = _outFile!.copySync(newPath);
+      ShareExtend.share(shareFile.path, 'file');
     }
   }
 
@@ -219,5 +240,33 @@ class PatcherAPI {
     File log = File('${logDir.path}/revanced-manager_patcher_$dateTime.log');
     log.writeAsStringSync(logs);
     ShareExtend.share(log.path, 'file');
+  }
+
+  String getRecommendedVersion(String packageName) {
+    Map<String, int> versions = {};
+    for (Patch patch in _patches) {
+      Package? package = patch.compatiblePackages.firstWhereOrNull(
+        (pack) => pack.name == packageName,
+      );
+      if (package != null) {
+        for (String version in package.versions) {
+          versions.update(
+            version,
+            (value) => versions[version]! + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
+    }
+    if (versions.isNotEmpty) {
+      var entries = versions.entries.toList()
+        ..sort((a, b) => a.value.compareTo(b.value));
+      versions
+        ..clear()
+        ..addEntries(entries);
+      versions.removeWhere((key, value) => value != versions.values.last);
+      return (versions.keys.toList()..sort()).last;
+    }
+    return '';
   }
 }
